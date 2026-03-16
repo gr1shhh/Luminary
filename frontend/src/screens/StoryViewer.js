@@ -4,30 +4,28 @@ import './StoryViewer.css';
 
 export default function StoryViewer({ topic, plan, scenes, onRestart }) {
   const [generatedScenes, setGeneratedScenes] = useState([]);
-  const [status, setStatus] = useState('loading'); // loading | ready
+  const [status, setStatus] = useState('loading');
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [current, setCurrent] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
   const [editInput, setEditInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingImage, setLoadingImage] = useState(false);
-
   const audioRef = useRef(null);
+
   const MOCK = process.env.REACT_APP_MOCK === 'true';
 
   useEffect(() => { generateAssets(); }, []);
 
-  // Auto-play audio when scene changes
+  // Autoplay when scene changes
   useEffect(() => {
+    if (status !== 'ready') return;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
-    // Small delay to let component re-render with new audio src
     const timer = setTimeout(() => {
-      if (audioRef.current && audioRef.current.src) {
-        audioRef.current.play().catch(() => {});
-      }
+      audioRef.current?.play().catch(() => {});
     }, 100);
     return () => clearTimeout(timer);
   }, [current, status]);
@@ -45,35 +43,29 @@ export default function StoryViewer({ topic, plan, scenes, onRestart }) {
       setStatus('ready');
       return;
     }
-
     try {
       await streamAssets(
-        scenes,
-        plan.art_style,
+        scenes, plan.art_style,
         (p) => setProgress({ current: p.scene, total: p.total }),
-        (scene) => setGeneratedScenes(prev => [...prev, scene]),
-        () => setStatus('ready'),
+        (scene) => {
+          console.log('Scene received:', scene.scene_number);
+          setGeneratedScenes(prev => {
+            // Show viewer as soon as first scene arrives
+            if (prev.length === 0) setStatus('ready');
+            return [...prev, scene];
+          });
+        },
+        () => { console.log('Stream done'); },
       );
+      setStatus('ready');
     } catch (err) {
-      console.error(err);
+      console.error('Stream error:', err);
       setStatus('ready');
     }
   };
 
-  const scene = generatedScenes[current];
-  const isFirst = current === 0;
-  const isLast = current === generatedScenes.length - 1;
-
-  const handlePrev = () => {
-    if (audioRef.current) audioRef.current.pause();
-    setCurrent(i => i - 1);
-    setEditOpen(false);
-  };
-  const handleNext = () => {
-    if (audioRef.current) audioRef.current.pause();
-    setCurrent(i => i + 1);
-    setEditOpen(false);
-  };
+  const handlePrev = () => { audioRef.current?.pause(); setCurrent(i => i - 1); setEditOpen(false); };
+  const handleNext = () => { audioRef.current?.pause(); setCurrent(i => i + 1); setEditOpen(false); };
 
   const handleRegenerateImage = async () => {
     setLoadingImage(true);
@@ -98,10 +90,7 @@ export default function StoryViewer({ topic, plan, scenes, onRestart }) {
         updated[current] = { ...updated[current], scene_text: `[Rewritten] ${scene.scene_text}` };
         setGeneratedScenes(updated);
       } else {
-        const res = await regenerateSceneAssets(
-          scene.scene_number, scene.scene_text,
-          plan.art_style, plan.tone, editInput
-        );
+        const res = await regenerateSceneAssets(scene.scene_number, scene.scene_text, plan.art_style, plan.tone, editInput);
         const updated = [...generatedScenes];
         updated[current] = { ...updated[current], ...res.data };
         setGeneratedScenes(updated);
@@ -120,95 +109,104 @@ export default function StoryViewer({ topic, plan, scenes, onRestart }) {
         <div className="viewer-loading-topic">"{topic}"</div>
         <div className="viewer-loading-spinner" />
         <div className="viewer-loading-label">
-          {progress.current > 0
-            ? `Generating scene ${progress.current} of ${progress.total}...`
-            : 'Starting...'}
+          {progress.current > 0 ? `Generating scene ${progress.current} of ${progress.total}...` : 'Starting...'}
         </div>
         {progress.total > 0 && (
           <div className="viewer-loading-bar">
-            <div
-              className="viewer-loading-fill"
-              style={{ width: `${(progress.current / progress.total) * 100}%` }}
-            />
+            <div className="viewer-loading-fill" style={{ width: `${(progress.current / progress.total) * 100}%` }} />
+          </div>
+        )}
+        {/* Scene text preview */}
+        {progress.current > 0 && scenes[progress.current - 1] && (
+          <div className="viewer-loading-preview">
+            <div className="viewer-loading-preview-label">Scene {progress.current}</div>
+            <div className="viewer-loading-preview-text">{scenes[progress.current - 1]}</div>
           </div>
         )}
       </div>
     );
   }
 
+  const scene = generatedScenes[current];
   if (!scene) return null;
+
+  const isFirst = current === 0;
+  const isLast = current === generatedScenes.length - 1;
 
   return (
     <div className="viewer">
 
-      {/* Header */}
-      <div className="viewer-header">
-        <div className="viewer-eyebrow">Your Story</div>
-        <div className="viewer-topic">"{topic}"</div>
+      {/* Full bleed image */}
+      <div className="viewer-image-wrap" key={current}>
+        {scene.image_b64 ? (
+          <img className="viewer-image" src={`data:image/png;base64,${scene.image_b64}`} alt={`Scene ${scene.scene_number}`} />
+        ) : (
+          <div className="viewer-image-placeholder"><span>Scene {scene.scene_number}</span></div>
+        )}
+      </div>
+
+      {/* Gradient overlay */}
+      <div className="viewer-overlay" />
+
+      {/* Hidden autoplay audio */}
+      {scene.audio_b64 && (
+        <audio ref={audioRef} src={`data:audio/mp3;base64,${scene.audio_b64}`} />
+      )}
+
+      {/* Top bar */}
+      <div className="viewer-topbar">
+        <button className="viewer-restart" onClick={onRestart}>✦ New story</button>
         <div className="viewer-counter">{current + 1} / {generatedScenes.length}</div>
       </div>
 
-      {/* Scene */}
-      <div className="viewer-scene" key={current}>
+      {/* Regenerate image button */}
+      <button className="viewer-regen-image-btn" onClick={handleRegenerateImage} disabled={loadingImage} title="New image">
+        {loadingImage ? '...' : '↺'}
+      </button>
 
-        {/* Image */}
-        <div className="viewer-image-wrap">
-          {scene.image_b64 ? (
-            <img className="viewer-image" src={`data:image/png;base64,${scene.image_b64}`} alt={`Scene ${scene.scene_number}`} />
-          ) : (
-            <div className="viewer-image-placeholder"><span>Scene {scene.scene_number}</span></div>
-          )}
-          <button className="viewer-regen-image-btn" onClick={handleRegenerateImage} disabled={loadingImage} title="New image">
-            {loadingImage ? '...' : '↺'}
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="viewer-body">
+      {/* Bottom content */}
+      <div className="viewer-bottom">
+        <div className="viewer-scene-number-row">
           <div className="viewer-scene-number">Scene {scene.scene_number}</div>
-          <div className="viewer-scene-text">{scene.scene_text}</div>
-
-          {scene.audio_b64 && (
-            <audio className="viewer-audio" controls src={`data:audio/mp3;base64,${scene.audio_b64}`} />
-          )}
-
-          {editOpen && (
-            <div className="viewer-edit-row">
-              <input
-                className="viewer-edit-input"
-                type="text"
-                placeholder="How would you like to change this scene?"
-                value={editInput}
-                onChange={e => setEditInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleRewrite()}
-                disabled={loading}
-                autoFocus
-              />
-              <button className="viewer-edit-submit" onClick={handleRewrite} disabled={!editInput.trim() || loading}>
-                {loading ? '...' : '↑'}
-              </button>
+          {generatedScenes.length < scenes.length && (
+            <div className="viewer-generating-badge">
+              ⟳ Generating scene {generatedScenes.length + 1} of {scenes.length}...
             </div>
           )}
+        </div>
+        <div className="viewer-scene-text">{scene.scene_text}</div>
 
+        {editOpen && (
+          <div className="viewer-edit-row">
+            <input
+              className="viewer-edit-input"
+              type="text"
+              placeholder="How would you like to change this scene?"
+              value={editInput}
+              onChange={e => setEditInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleRewrite()}
+              disabled={loading}
+              autoFocus
+            />
+            <button className="viewer-edit-submit" onClick={handleRewrite} disabled={!editInput.trim() || loading}>
+              {loading ? '...' : '↑'}
+            </button>
+          </div>
+        )}
+
+        <div className="viewer-nav">
+          <button className="viewer-nav-btn" onClick={handlePrev} disabled={isFirst}>← Prev</button>
+          <div className="viewer-dots">
+            {generatedScenes.map((_, i) => (
+              <div key={i} className={`viewer-dot ${i === current ? 'active' : ''}`}
+                onClick={() => { setCurrent(i); setEditOpen(false); }} />
+            ))}
+          </div>
+          <button className="viewer-nav-btn" onClick={handleNext} disabled={isLast}>Next →</button>
           <button className="viewer-edit-btn" onClick={() => setEditOpen(o => !o)}>
-            {editOpen ? '✕ Cancel' : '✏ Rewrite this scene'}
+            {editOpen ? '✕ Cancel' : '✏ Edit'}
           </button>
         </div>
-      </div>
-
-      {/* Navigation */}
-      <div className="viewer-nav">
-        <button className="viewer-nav-btn" onClick={handlePrev} disabled={isFirst}>← Prev</button>
-        <div className="viewer-dots">
-          {generatedScenes.map((_, i) => (
-            <div key={i} className={`viewer-dot ${i === current ? 'active' : ''}`} onClick={() => { setCurrent(i); setEditOpen(false); }} />
-          ))}
-        </div>
-        <button className="viewer-nav-btn" onClick={handleNext} disabled={isLast}>Next →</button>
-      </div>
-
-      <div className="viewer-footer">
-        <button className="viewer-restart" onClick={onRestart}>✦ Create another story</button>
       </div>
 
     </div>

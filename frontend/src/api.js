@@ -23,23 +23,43 @@ export const streamAssets = async (scenes, art_style, onProgress, onScene, onDon
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
+  let buffer = '';
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
 
-    const text = decoder.decode(value);
-    const lines = text.split('\n').filter(l => l.startsWith('data: '));
+    buffer += decoder.decode(value, { stream: true });
 
-    for (const line of lines) {
+    // SSE messages are delimited by double newline \n\n
+    // Split on double newline to get complete messages
+    const messages = buffer.split('\n\n');
+    // Last element may be incomplete — keep in buffer
+    buffer = messages.pop();
+
+    for (const message of messages) {
+      // Each message may have multiple lines starting with "data: "
+      const dataLine = message.split('\n').find(l => l.startsWith('data: '));
+      if (!dataLine) continue;
       try {
-        const data = JSON.parse(line.replace('data: ', ''));
+        const data = JSON.parse(dataLine.slice(6));
         if (data.type === 'progress') onProgress(data);
         if (data.type === 'scene') onScene(data);
         if (data.type === 'done') onDone();
       } catch (e) {
-        console.error('SSE parse error', e);
+        console.error('SSE parse error:', e.message);
       }
+    }
+  }
+
+  // Process any remaining complete message in buffer
+  if (buffer.includes('data: ')) {
+    const dataLine = buffer.split('\n').find(l => l.startsWith('data: '));
+    if (dataLine) {
+      try {
+        const data = JSON.parse(dataLine.slice(6));
+        if (data.type === 'done') onDone();
+      } catch (e) {}
     }
   }
 };

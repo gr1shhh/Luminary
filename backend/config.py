@@ -10,7 +10,7 @@ IMAGE_MODEL_NAME = "imagen-3.0-generate-001"
 VOICE_NAME = "en-US-Studio-O"
 SPEAKING_RATE = 0.92
 
-SCENE_DELAY = 80
+SCENE_DELAY = 61
 
 # --- Fallback topic if user skips input ---
 USER_TOPIC = "A NASA engineer watching the moon landing"

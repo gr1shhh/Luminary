@@ -1,0 +1,144 @@
+.landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px 80px;
+  background: var(--bg);
+}
+
+/* ── Hero ── */
+.landing-hero {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.landing-eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.landing-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 80px;
+  font-weight: 300;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.landing-title span {
+  font-style: italic;
+  color: darkorange;
+}
+
+.landing-sub {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-style: italic;
+  color: var(--text-primary);
+  margin-top: 12px;
+}
+
+/* ── Input row ── */
+.landing-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 620px;
+  margin-bottom: 32px;
+}
+
+.landing-input {
+  flex: 1;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  padding: 16px 20px;
+  outline: none;
+  transition: border-color 0.2s;
+  caret-color: #1a1a1a;
+}
+
+.landing-input::placeholder {
+  color: #ccc;
+}
+
+.landing-input:focus {
+  border-color: #1a1a1a;
+}
+
+.landing-submit {
+  background: #1a1a1a;
+  border: none;
+  border-radius: 8px;
+  color: #faf9f7;
+  font-size: 18px;
+  font-weight: 700;
+  width: 56px;
+  height: 56px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing-submit:hover {
+  opacity: 0.75;
+}
+
+.landing-submit:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+/* ── Suggestions ── */
+.landing-suggestions-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  color: black;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.landing-chips {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.landing-chip {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: var(--text-primary);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-style: italic;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  width: 100%;
+  text-align: center;
+}
+
+.landing-chip:hover {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+}

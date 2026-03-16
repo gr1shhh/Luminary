@@ -1,0 +1,330 @@
+.review {
+  min-height: 100vh;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 60px 24px 80px;
+}
+
+/* ── Header ── */
+.review-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.review-eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.review-topic {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.review-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.review-meta-dot { color: var(--border); }
+.review-meta-style { color: darkorange; }
+
+/* ── Loading ── */
+.review-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 80px 0;
+}
+
+.review-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border);
+  border-top-color: var(--text-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.review-status-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* ── Progress dots ── */
+.review-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.review-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.2s;
+}
+
+.review-dot.active {
+  background: #1a1a1a;
+  transform: scale(1.3);
+}
+
+.review-dot.done {
+  background: darkorange;
+}
+
+/* ── Scene card ── */
+.review-scene-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.review-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px 32px;
+  margin-bottom: 16px;
+}
+
+.review-card-number {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: darkorange;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.review-card-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+
+/* ── Edit row ── */
+.review-edit-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.review-edit-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.review-edit-input::placeholder { color: #ccc; }
+.review-edit-input:focus { border-color: #1a1a1a; }
+
+.review-edit-submit {
+  background: #1a1a1a;
+  border: none;
+  border-radius: 6px;
+  color: #faf9f7;
+  font-size: 16px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.review-edit-submit:hover { opacity: 0.75; }
+.review-edit-submit:disabled { opacity: 0.2; cursor: not-allowed; }
+
+/* ── Action buttons ── */
+.review-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.review-btn-edit {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.review-btn-edit:hover {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+}
+
+.review-btn-approve {
+  flex: 2;
+  background: #1a1a1a;
+  border: none;
+  border-radius: 8px;
+  color: #faf9f7;
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 14px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.review-btn-approve:hover { opacity: 0.8; }
+
+/* ── Restart ── */
+.review-restart {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: color 0.15s;
+}
+
+.review-restart:hover { color: #1a1a1a; }
+
+/* ── Steering screen ── */
+.steering-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.steering-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.steering-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.steering-optional {
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-transform: none;
+  font-size: 9px;
+}
+
+.steering-styles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.steering-style-btn {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: var(--text-muted);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-style: italic;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.steering-style-btn:hover {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
+}
+
+.steering-style-btn.active {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #faf9f7;
+  font-style: normal;
+}
+
+.steering-input {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  padding: 14px 18px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.steering-input::placeholder { color: #ccc; }
+.steering-input:focus { border-color: #1a1a1a; }
+
+.steering-generate-btn {
+  background: #1a1a1a;
+  border: none;
+  border-radius: 8px;
+  color: #faf9f7;
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 16px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  width: 100%;
+}
+
+.steering-generate-btn:hover { opacity: 0.8; }

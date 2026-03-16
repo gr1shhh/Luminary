@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { planStory, generateStory, critiqueScene, regenerateScene } from '../api';
+import { planStory, generateStory, critiqueScene, regenerateScene, generateSingleSceneAssets } from '../api';
 import './SceneReview.css';
 
 const CRITIQUE_THRESHOLD = 7;
@@ -23,7 +23,12 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
   const [editOpen, setEditOpen] = useState(false);
   const [editInput, setEditInput] = useState('');
   const [rewriting, setRewriting] = useState(false);
+  const preGeneratedAssets = useState({}); // scene_number -> asset data
+  const [assets, setAssets] = preGeneratedAssets;
 
+  const [pendingAssets, setPendingAssets] = useState({});
+  const [completedCount, setCompletedCount] = useState(0);
+  const [totalScenes, setTotalScenes] = useState(0);
   const MOCK = process.env.REACT_APP_MOCK === 'true';
 
   useEffect(() => { runPlanning(); }, []);
@@ -34,7 +39,7 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
       if (MOCK) {
         setStatus('planning'); setStatusText('Planning your story...');
         await new Promise(r => setTimeout(r, 1000));
-        const mockPlan = { scene_count: 3, tone: 'melancholic and tense', art_style: 'cinematic photorealistic' };
+        const mockPlan = { scene_count: 4, tone: 'melancholic and tense', art_style: 'Cartoon Illustration' };
         setPlan(mockPlan);
         setArtStyle(mockPlan.art_style);
         setStatus('steering');
@@ -62,9 +67,10 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
         setStatusText('Refining and critiquing...');
         await new Promise(r => setTimeout(r, 600));
         setScenes([
-          `The control room hummed with nervous energy. Engineer Frank Matthews pressed his palms flat against the cold metal console, watching the numbers climb. Outside, the whole world held its breath.`,
-          `Static crackled over the radio. Then Armstrong's voice — calm, impossible calm — cut through: "The Eagle has landed." Frank's knees buckled. Around him, grown men wept openly.`,
-          `Hours later, alone on the roof of the building, Frank looked up at the moon. It looked the same as it always had. But everything was different now. Everything would always be different.`,
+          `Sergeant Thomas Hale sat in the dim trench, rifle across his knees, an unwritten letter in his hands. Dawn was two hours away. The assault would begin at first light. He pressed the pen to the paper and found he could not remember how to begin.`,
+          `He wrote about the smell of his mother's kitchen. About his younger brother's laugh. About the dog that waited by the gate every evening. The words came slowly at first, then all at once, like a dam giving way in his chest.`,
+          `The shelling started before he could finish. Men scrambled around him, but Thomas stayed seated, folding the letter with careful hands, pressing it into the breast pocket over his heart. Whatever happened next, she would know.`,
+          `At the edge of the trench, just before the whistle, he looked up at the pale sky. The same sky she was under, somewhere far away. He thought: if this is the last thing I see, it is enough. Then the whistle blew, and he climbed.`,
         ]);
         setStatus('ready');
         return;
@@ -92,13 +98,61 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
     }
   };
 
+  const generateWithRetry = async (sceneNumber, sceneText, artStyle) => {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const res = await generateSingleSceneAssets(sceneNumber, sceneText, artStyle);
+        if (res.data.image_b64 && res.data.audio_b64) return res.data;
+        console.log(`Scene ${sceneNumber} image missing, retrying (${attempt}/2)...`);
+        await new Promise(r => setTimeout(r, 65000));
+      } catch (err) {
+        console.log(`Scene ${sceneNumber} attempt ${attempt} failed:`, err.message);
+        if (attempt < 2) await new Promise(r => setTimeout(r, 65000));
+        else throw err;
+      }
+    }
+    throw new Error(`Scene ${sceneNumber} failed after 2 retries`);
+  };
+
   const handleApprove = () => {
     setEditOpen(false);
     setEditInput('');
-    if (currentScene < scenes.length - 1) {
+
+    const sceneNumber = currentScene + 1;
+    const sceneText = scenes[currentScene];
+    const isLast = currentScene === scenes.length - 1;
+
+    if (!MOCK) {
+      generateWithRetry(sceneNumber, sceneText, artStyle)
+        .then(data => {
+          setPendingAssets(prev => {
+            const updated = { ...prev, [data.scene_number]: data };
+            setCompletedCount(c => {
+              const newCount = c + 1;
+              if (newCount === scenes.length) {
+                onApprove({ ...plan, art_style: artStyle }, scenes, updated);
+              }
+              return newCount;
+            });
+            return updated;
+          });
+        })
+        .catch(err => {
+          console.error('Scene generation failed after retries:', err);
+          setStatus('error');
+          setStatusText('Generation failed. Please try again in a few minutes.');
+        });
+    }
+
+    if (!isLast) {
       setCurrentScene(i => i + 1);
     } else {
-      onApprove({ ...plan, art_style: artStyle }, scenes);
+      if (MOCK) {
+        onApprove({ ...plan, art_style: artStyle }, scenes, {});
+      } else {
+        setTotalScenes(scenes.length);
+        setStatus('finalizing');
+      }
     }
   };
 
@@ -130,6 +184,34 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
 
   const isLast = scenes.length > 0 && currentScene === scenes.length - 1;
 
+  if (status === 'finalizing') {
+    return (
+      <div className="review-wrap">
+        <div className="review-loading">
+          <div className="review-spinner" />
+          <div className="review-status-text">Finalizing your story...</div>
+          <div className="review-loading-sub">{completedCount} of {totalScenes} scenes ready</div>
+          <div className="viewer-loading-bar" style={{ width: 240, marginTop: 12 }}>
+            <div className="viewer-loading-fill" style={{ width: `${totalScenes > 0 ? (completedCount / totalScenes) * 100 : 0}%` }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="review-wrap">
+        <div className="review-loading">
+          <div className="review-status-text" style={{ color: '#c0392b' }}>{statusText}</div>
+          <button className="steering-btn" style={{ marginTop: 16 }} onClick={() => window.location.reload()}>
+            ↺ Start over
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="review">
 
@@ -155,6 +237,8 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
           <div className="review-status-text">{statusText}</div>
         </div>
       )}
+
+
 
       {/* ── Steering screen ── */}
       {status === 'steering' && plan && (

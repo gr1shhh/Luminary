@@ -1,29 +1,50 @@
-# Python
+# ── Node / Frontend ──────────────────────────────────────
+node_modules/
+/.pnp
+.pnp.js
+/coverage
+/build
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.vercel
+
+# ── Python / Backend ─────────────────────────────────────
 __pycache__/
 *.py[cod]
+*.pyc
+*.pyo
 *.egg-info/
-.env
 
-# Virtual environments
+# ── Environment files ────────────────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ── Google Cloud ─────────────────────────────────────────
+application_default_credentials.json
+service-account-key.json
+
+# ── Outputs / generated assets ───────────────────────────
+backend/outputs/
+*.log
+
+# ── Virtual environments ─────────────────────────────────
 venv/
 .venv/
 env/
 
-# Outputs
-backend/outputs/
+# ── Old / unused folders ─────────────────────────────────
+backend/story-agent-old/
+backend/test-scripts-old/
+backend/older-files/
 
-# Google Cloud credentials
-*.json
-application_default_credentials.json
-
-# OS
+# ── OS ───────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# IDE
+# ── IDE ──────────────────────────────────────────────────
 .vscode/
 .idea/
-
-# Project specific
-backend/story-agent-old/
-backend/test-scripts-old/

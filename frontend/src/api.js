@@ -30,15 +30,10 @@ export const streamAssets = async (scenes, art_style, onProgress, onScene, onDon
     if (done) break;
 
     buffer += decoder.decode(value, { stream: true });
-
-    // SSE messages are delimited by double newline \n\n
-    // Split on double newline to get complete messages
     const messages = buffer.split('\n\n');
-    // Last element may be incomplete — keep in buffer
     buffer = messages.pop();
 
     for (const message of messages) {
-      // Each message may have multiple lines starting with "data: "
       const dataLine = message.split('\n').find(l => l.startsWith('data: '));
       if (!dataLine) continue;
       try {
@@ -52,7 +47,6 @@ export const streamAssets = async (scenes, art_style, onProgress, onScene, onDon
     }
   }
 
-  // Process any remaining complete message in buffer
   if (buffer.includes('data: ')) {
     const dataLine = buffer.split('\n').find(l => l.startsWith('data: '));
     if (dataLine) {
@@ -69,3 +63,6 @@ export const regenerateImage = (scene_number, scene_text, art_style) =>
 
 export const regenerateSceneAssets = (scene_number, scene_text, art_style, tone, instruction) =>
   axios.post(`${BASE_URL}/regenerate-scene-assets`, { scene_number, scene_text, art_style, tone, instruction });
+
+export const generateSingleSceneAssets = (scene_number, scene_text, art_style) =>
+  axios.post(`${BASE_URL}/generate-single-scene-assets`, { scene_number, scene_text, art_style });

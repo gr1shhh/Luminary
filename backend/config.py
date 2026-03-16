@@ -8,7 +8,7 @@ STORY_MODEL_NAME = "gemini-2.5-flash"
 IMAGE_MODEL_NAME = "imagen-3.0-generate-001"
 
 VOICE_NAME = "en-US-Studio-O"
-SPEAKING_RATE = 0.92
+SPEAKING_RATE = 0.78
 
 SCENE_DELAY = 61
 

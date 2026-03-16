@@ -3,9 +3,6 @@
 Turn any idea into a fully illustrated, narrated cinematic story using Gemini 2.5 Flash, Imagen 3, and Google Cloud TTS.
 
 🌐 **Live Demo:** https://luminary-omega-one.vercel.app
-
-![Architecture Diagram](architecture.png)
-
 ---
 
 ## Setup

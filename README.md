@@ -12,10 +12,19 @@ conda create -n luminary python=3.11
 conda activate luminary
 ```
 
-**2. Install dependencies**
+**2. Install Google Cloud CLI**
+Download and install:\
+https://cloud.google.com/sdk/docs/install
+
+```bash
+gcloud --version
+```
+
+**3. Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
+
 
 **3. Authenticate with Google Cloud**
 ```bash

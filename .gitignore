@@ -10,7 +10,7 @@ venv/
 env/
 
 # Outputs
-outputs/
+backend/outputs/
 
 # Google Cloud credentials
 *.json
@@ -25,5 +25,5 @@ Thumbs.db
 .idea/
 
 # Project specific
-story-agent-old/
-test-scripts-old/
+backend/story-agent-old/
+backend/test-scripts-old/

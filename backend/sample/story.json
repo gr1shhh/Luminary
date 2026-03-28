@@ -1,0 +1,56 @@
+{
+  "topic": "A soldier writing his last letter home before battle",
+  "plan": {
+    "scene_count": 4,
+    "tone": "melancholic and tense",
+    "art_style": "cinematic photorealistic"
+  },
+  "scenes": [
+    {
+      "scene_number": 1,
+      "scene_text": "A lone candle on a metal crate cast long dancing shadows, barely illuminating the soldier's weary face. He uncapped his pen, the silence of the makeshift bunker broken only by the scratch of nib on paper. In the distance, a low, ominous growl began to ripple through the earth, the first warning of artillery.",
+      "mock_image_url": "http://localhost:8000/sample/scene_1.png",
+      "mock_audio_url": "http://localhost:8000/sample/scene_1.mp3",
+      "word_timings": [
+        {"word": "A", "time": 0.0}, {"word": "lone", "time": 0.35}, {"word": "candle", "time": 0.71}, {"word": "on", "time": 1.06}, {"word": "a", "time": 1.41}, {"word": "metal", "time": 1.76}, {"word": "crate", "time": 2.12}, {"word": "cast", "time": 2.47}, {"word": "long", "time": 2.82}, {"word": "dancing", "time": 3.18}, {"word": "shadows,", "time": 3.53}, {"word": "barely", "time": 3.88}, {"word": "illuminating", "time": 4.24}, {"word": "the", "time": 4.59}, {"word": "soldier's", "time": 4.94}, {"word": "weary", "time": 5.29}, {"word": "face.", "time": 5.65},
+        {"word": "He", "time": 6.0}, {"word": "uncapped", "time": 6.32}, {"word": "his", "time": 6.63}, {"word": "pen,", "time": 6.95}, {"word": "the", "time": 7.26}, {"word": "silence", "time": 7.58}, {"word": "of", "time": 7.89}, {"word": "the", "time": 8.21}, {"word": "makeshift", "time": 8.53}, {"word": "bunker", "time": 8.84}, {"word": "broken", "time": 9.16}, {"word": "only", "time": 9.47}, {"word": "by", "time": 9.79}, {"word": "the", "time": 10.11}, {"word": "scratch", "time": 10.42}, {"word": "of", "time": 10.74}, {"word": "nib", "time": 11.05}, {"word": "on", "time": 11.37}, {"word": "paper.", "time": 11.68},
+        {"word": "In", "time": 12.0}, {"word": "the", "time": 12.36}, {"word": "distance,", "time": 12.72}, {"word": "a", "time": 13.08}, {"word": "low,", "time": 13.44}, {"word": "ominous", "time": 13.81}, {"word": "growl", "time": 14.17}, {"word": "began", "time": 14.53}, {"word": "to", "time": 14.89}, {"word": "ripple", "time": 15.25}, {"word": "through", "time": 15.61}, {"word": "the", "time": 15.97}, {"word": "earth,", "time": 16.33}, {"word": "the", "time": 16.69}, {"word": "first", "time": 17.06}, {"word": "warning", "time": 17.42}, {"word": "of", "time": 17.78}, {"word": "artillery.", "time": 18.14}
+      ]
+    },
+    {
+      "scene_number": 2,
+      "scene_text": "His eyes glazed over as memories bloomed in the dim light, vivid and painfully real. He pictured his child's unrestrained laughter echoing through a sunlit room, felt the gentle press of his wife's hand against his own. For a fleeting moment, the stench of cordite and the chill of the bunker vanished, replaced by the warmth of home.",
+      "mock_image_url": "http://localhost:8000/sample/scene_2.png",
+      "mock_audio_url": "http://localhost:8000/sample/scene_2.mp3",
+      "word_timings": [
+        {"word": "His", "time": 0.0}, {"word": "eyes", "time": 0.33}, {"word": "glazed", "time": 0.67}, {"word": "over", "time": 1.0}, {"word": "as", "time": 1.33}, {"word": "memories", "time": 1.67}, {"word": "bloomed", "time": 2.0}, {"word": "in", "time": 2.33}, {"word": "the", "time": 2.67}, {"word": "dim", "time": 3.0}, {"word": "light,", "time": 3.33}, {"word": "vivid", "time": 3.67}, {"word": "and", "time": 4.0}, {"word": "painfully", "time": 4.33}, {"word": "real.", "time": 4.67},
+        {"word": "He", "time": 5.0}, {"word": "pictured", "time": 5.36}, {"word": "his", "time": 5.73}, {"word": "child's", "time": 6.09}, {"word": "unrestrained", "time": 6.45}, {"word": "laughter", "time": 6.82}, {"word": "echoing", "time": 7.18}, {"word": "through", "time": 7.55}, {"word": "a", "time": 7.91}, {"word": "sunlit", "time": 8.27}, {"word": "room,", "time": 8.64},
+        {"word": "felt", "time": 9.0}, {"word": "the", "time": 9.27}, {"word": "gentle", "time": 9.55}, {"word": "press", "time": 9.82}, {"word": "of", "time": 10.09}, {"word": "his", "time": 10.36}, {"word": "wife's", "time": 10.64}, {"word": "hand", "time": 10.91}, {"word": "against", "time": 11.18}, {"word": "his", "time": 11.45}, {"word": "own.", "time": 11.73},
+        {"word": "For", "time": 12.0}, {"word": "a", "time": 12.27}, {"word": "fleeting", "time": 12.53}, {"word": "moment,", "time": 12.8}, {"word": "the", "time": 13.07}, {"word": "stench", "time": 13.33}, {"word": "of", "time": 13.6}, {"word": "cordite", "time": 13.87}, {"word": "and", "time": 14.13}, {"word": "the", "time": 14.4}, {"word": "chill", "time": 14.67}, {"word": "of", "time": 14.93}, {"word": "the", "time": 15.2}, {"word": "bunker", "time": 15.47}, {"word": "vanished,", "time": 15.73},
+        {"word": "replaced", "time": 16.0}, {"word": "by", "time": 16.58}, {"word": "the", "time": 17.17}, {"word": "warmth", "time": 17.75}, {"word": "of", "time": 18.33}, {"word": "home.", "time": 18.92}
+      ]
+    },
+    {
+      "scene_number": 3,
+      "scene_text": "A concussive blast outside ripped him back to the harsh present, shaking the very air in the bunker. With a sudden urgency, he scribbled the final heartfelt words, a desperate blend of longing and profound resignation. He folded the letter precisely, sealing it with a steady, determined hand that belied the tremor in his heart.",
+      "mock_image_url": "http://localhost:8000/sample/scene_3.png",
+      "mock_audio_url": "http://localhost:8000/sample/scene_3.mp3",
+      "word_timings": [
+        {"word": "A", "time": 0.0}, {"word": "concussive", "time": 0.28}, {"word": "blast", "time": 0.56}, {"word": "outside", "time": 0.83}, {"word": "ripped", "time": 1.11}, {"word": "him", "time": 1.39}, {"word": "back", "time": 1.67}, {"word": "to", "time": 1.94}, {"word": "the", "time": 2.22}, {"word": "harsh", "time": 2.5}, {"word": "present,", "time": 2.78}, {"word": "shaking", "time": 3.06}, {"word": "the", "time": 3.33}, {"word": "very", "time": 3.61}, {"word": "air", "time": 3.89}, {"word": "in", "time": 4.17}, {"word": "the", "time": 4.44}, {"word": "bunker.", "time": 4.72},
+        {"word": "With", "time": 5.0}, {"word": "a", "time": 5.39}, {"word": "sudden", "time": 5.78}, {"word": "urgency,", "time": 6.17}, {"word": "he", "time": 6.56}, {"word": "scribbled", "time": 6.94}, {"word": "the", "time": 7.33}, {"word": "final", "time": 7.72}, {"word": "heartfelt", "time": 8.11}, {"word": "words,", "time": 8.5}, {"word": "a", "time": 8.89}, {"word": "desperate", "time": 9.28}, {"word": "blend", "time": 9.67}, {"word": "of", "time": 10.06}, {"word": "longing", "time": 10.44}, {"word": "and", "time": 10.83}, {"word": "profound", "time": 11.22}, {"word": "resignation.", "time": 11.61},
+        {"word": "He", "time": 12.0}, {"word": "folded", "time": 12.37}, {"word": "the", "time": 12.74}, {"word": "letter", "time": 13.11}, {"word": "precisely,", "time": 13.47}, {"word": "sealing", "time": 13.84}, {"word": "it", "time": 14.21}, {"word": "with", "time": 14.58}, {"word": "a", "time": 14.95}, {"word": "steady,", "time": 15.32}, {"word": "determined", "time": 15.68}, {"word": "hand", "time": 16.05}, {"word": "that", "time": 16.42}, {"word": "belied", "time": 16.79}, {"word": "the", "time": 17.16}, {"word": "tremor", "time": 17.53}, {"word": "in", "time": 17.89}, {"word": "his", "time": 18.26}, {"word": "heart.", "time": 18.63}
+      ]
+    },
+    {
+      "scene_number": 4,
+      "scene_text": "The finished letter was tucked deep into his chest pocket, a silent burden and a fragile hope. He then strapped on his helmet, the familiar weight a cold comfort, and picked up his rifle with a practiced, deliberate movement. Taking one last, deep breath, he moved towards the bunker's exit, ready to face the impending dawn.",
+      "mock_image_url": "http://localhost:8000/sample/scene_4.png",
+      "mock_audio_url": "http://localhost:8000/sample/scene_4.mp3",
+      "word_timings": [
+        {"word": "The", "time": 0.0}, {"word": "finished", "time": 0.29}, {"word": "letter", "time": 0.59}, {"word": "was", "time": 0.88}, {"word": "tucked", "time": 1.18}, {"word": "deep", "time": 1.47}, {"word": "into", "time": 1.76}, {"word": "his", "time": 2.06}, {"word": "chest", "time": 2.35}, {"word": "pocket,", "time": 2.65}, {"word": "a", "time": 2.94}, {"word": "silent", "time": 3.24}, {"word": "burden", "time": 3.53}, {"word": "and", "time": 3.82}, {"word": "a", "time": 4.12}, {"word": "fragile", "time": 4.41}, {"word": "hope.", "time": 4.71},
+        {"word": "He", "time": 5.0}, {"word": "then", "time": 5.32}, {"word": "strapped", "time": 5.64}, {"word": "on", "time": 5.95}, {"word": "his", "time": 6.27}, {"word": "helmet,", "time": 6.59}, {"word": "the", "time": 6.91}, {"word": "familiar", "time": 7.23}, {"word": "weight", "time": 7.55}, {"word": "a", "time": 7.86}, {"word": "cold", "time": 8.18}, {"word": "comfort,", "time": 8.5}, {"word": "and", "time": 8.82}, {"word": "picked", "time": 9.14}, {"word": "up", "time": 9.45}, {"word": "his", "time": 9.77}, {"word": "rifle", "time": 10.09}, {"word": "with", "time": 10.41}, {"word": "a", "time": 10.73}, {"word": "practiced,", "time": 11.05}, {"word": "deliberate", "time": 11.36}, {"word": "movement.", "time": 11.68},
+        {"word": "Taking", "time": 12.0}, {"word": "one", "time": 12.41}, {"word": "last,", "time": 12.82}, {"word": "deep", "time": 13.24}, {"word": "breath,", "time": 13.65}, {"word": "he", "time": 14.06}, {"word": "moved", "time": 14.47}, {"word": "towards", "time": 14.88}, {"word": "the", "time": 15.29}, {"word": "bunker's", "time": 15.71}, {"word": "exit,", "time": 16.12}, {"word": "ready", "time": 16.53}, {"word": "to", "time": 16.94}, {"word": "face", "time": 17.35}, {"word": "the", "time": 17.76}, {"word": "impending", "time": 18.18}, {"word": "dawn.", "time": 18.59}
+      ]
+    }
+  ]
+}

@@ -4,5 +4,6 @@ python-multipart==0.0.9
 google-genai==1.67.0
 google-cloud-aiplatform==1.141.0
 google-cloud-texttospeech==2.34.0
+google-cloud-speech==2.38.0
 google-auth==2.49.1
 Pillow==10.4.0

@@ -1,33 +1,28 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { streamAssets, regenerateImage, regenerateSceneAssets } from "../api";
+import { streamAssets, regenerateImage } from "../api";
 import "./StoryViewer.css";
 
 function buildPhrases(scene_text, word_timings) {
 	if (!word_timings || word_timings.length === 0) return [];
-
-	// Split original scene text into words (preserves punctuation/caps)
 	const originalWords = scene_text.trim().split(/\s+/);
 	const CHUNK_SIZE = 6;
 	const phrases = [];
-
 	for (let i = 0; i < word_timings.length; i += CHUNK_SIZE) {
 		const chunk = word_timings.slice(i, i + CHUNK_SIZE);
-		// Use original words for display, STT timing for sync
 		const displayWords = originalWords.slice(i, i + CHUNK_SIZE).join(" ");
-		phrases.push({
-			text: displayWords,
-			start: chunk[0].time,
-		});
+		phrases.push({ text: displayWords, start: chunk[0].time });
 	}
 	return phrases;
 }
 
-export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = {}, onRestart }) {
+export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = {}, characterDescriptions = "", onRestart }) {
 	const [generatedScenes, setGeneratedScenes] = useState([]);
 	const [status, setStatus] = useState("loading");
 	const [progress, setProgress] = useState({ current: 0, total: 0 });
 	const [current, setCurrent] = useState(0);
 	const [loadingImage, setLoadingImage] = useState(false);
+	const [regenUsed, setRegenUsed] = useState(false); // 1 regen per story total
+	const [confirmRegen, setConfirmRegen] = useState(false);
 	const audioRef = useRef(null);
 	const [phraseIndex, setPhraseIndex] = useState(-1);
 
@@ -37,8 +32,6 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 	useEffect(() => {
 		generateAssets();
 	}, []);
-
-	// Build phrases for current scene
 
 	const phrases = useMemo(() => {
 		const scene = generatedScenes[current];
@@ -50,6 +43,7 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 	useEffect(() => {
 		if (status !== "ready") return;
 		setPhraseIndex(-1);
+		setConfirmRegen(false);
 		if (audioRef.current) {
 			audioRef.current.pause();
 			audioRef.current.currentTime = 0;
@@ -60,7 +54,7 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 		return () => clearTimeout(timer);
 	}, [current, status]);
 
-	// Phrase sync via timeupdate
+	// Phrase sync
 	useEffect(() => {
 		const audio = audioRef.current;
 		if (!audio || phrases.length === 0) return;
@@ -129,6 +123,7 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 			await streamAssets(
 				missingScenes.map((s) => s.scene_text),
 				plan.art_style,
+				characterDescriptions,
 				(p) => setProgress({ current: p.scene, total: missingScenes.length }),
 				(streamedScene) => {
 					const originalNumber = missingScenes[streamedScene.scene_number - 1]?.scene_number;
@@ -159,20 +154,31 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 		setCurrent((i) => i + 1);
 	};
 
-	const handleRegenerateImage = async () => {
+	const handleRegenClick = () => {
+		if (MOCK || regenUsed || loadingImage) return;
+		setConfirmRegen(true);
+		audioRef.current?.pause();
+	};
+
+	const handleRegenConfirm = async () => {
+		setConfirmRegen(false);
 		setLoadingImage(true);
 		try {
-			if (!MOCK) {
-				const scene = generatedScenes[current];
-				const res = await regenerateImage(scene.scene_number, scene.scene_text, plan.art_style);
-				const updated = [...generatedScenes];
-				updated[current] = { ...updated[current], image_b64: res.data.image_b64 };
-				setGeneratedScenes(updated);
-			}
+			const res = await regenerateImage(scene.scene_number, scene.scene_text, plan.art_style, characterDescriptions);
+			const updated = [...generatedScenes];
+			updated[current] = { ...updated[current], image_b64: res.data.image_b64 };
+			setGeneratedScenes(updated);
+			setRegenUsed(true); // disable all regen buttons for this story
 		} catch (err) {
 			console.error(err);
 		}
 		setLoadingImage(false);
+		// Restart audio and subtitles from beginning
+		setPhraseIndex(-1);
+		if (audioRef.current) {
+			audioRef.current.currentTime = 0;
+			audioRef.current.play().catch(() => {});
+		}
 	};
 
 	// ── Loading screen ──
@@ -208,8 +214,8 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 	return (
 		<div className="viewer">
 			<div className="viewer-scene" key={current}>
-				{/* Image + subtitle overlay */}
 				<div className="viewer-image-wrap">
+					{/* Image */}
 					{scene.mock_image_url ? (
 						<img className="viewer-image" src={scene.mock_image_url} alt={`Scene ${scene.scene_number}`} />
 					) : scene.image_b64 ? (
@@ -221,18 +227,62 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 						</div>
 					)}
 
-					{/* Subtitle overlay — full phrase at once */}
+					{/* Subtitle overlay */}
 					{currentPhrase && (
 						<div className="viewer-subtitle-overlay">
 							<span className="viewer-subtitle-text">{currentPhrase}</span>
 						</div>
 					)}
 
-					<button className="viewer-regen-image-btn" onClick={handleRegenerateImage} disabled={loadingImage} title="New image">
-						{loadingImage ? "..." : "↺"}
-					</button>
+					{/* Regen button + inline confirm */}
+					{!MOCK &&
+						<div className="viewer-regen-wrap">
+							<button
+								className={`viewer-regen-image-btn ${regenUsed ? "used" : ""}`}
+								onClick={handleRegenClick}
+								disabled={loadingImage || regenUsed}
+								title={regenUsed ? "Already regenerated" : "New image"}
+							>
+								{loadingImage ? "..." : "↺"}
+							</button>
 
-					{(scene.audio_b64 || scene.mock_audio_url) && <audio ref={audioRef} src={scene.mock_audio_url || `data:audio/mp3;base64,${scene.audio_b64}`} onEnded={() => { if (!isLast) setCurrent((i) => i + 1); }} /> }
+							{/* Inline confirm — appears to the left of the button */}
+							{confirmRegen && (
+								<div className="viewer-regen-confirm">
+									<div className="viewer-regen-confirm-text">
+										Regenerate? <span>1 use per story.</span>
+									</div>
+									<div className="viewer-regen-confirm-actions">
+										<button className="viewer-regen-confirm-cancel" onClick={() => setConfirmRegen(false)}>
+											Cancel
+										</button>
+										<button className="viewer-regen-confirm-ok" onClick={handleRegenConfirm}>
+											Yes
+										</button>
+									</div>
+								</div>
+							)}
+						</div>
+					}
+
+					{/* Loading overlay */}
+					{loadingImage && (
+						<div className="viewer-regen-loading">
+							<div className="viewer-image-loading-spinner" />
+							<span>Generating new image...</span>
+						</div>
+					)}
+
+					{/* Audio */}
+					{(scene.audio_b64 || scene.mock_audio_url) && (
+						<audio
+							ref={audioRef}
+							src={scene.mock_audio_url || `data:audio/mp3;base64,${scene.audio_b64}`}
+							onEnded={() => {
+								if (!isLast) setCurrent((i) => i + 1);
+							}}
+						/>
+					)}
 				</div>
 			</div>
 

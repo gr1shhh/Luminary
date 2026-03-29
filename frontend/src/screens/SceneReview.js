@@ -13,19 +13,17 @@ const ART_STYLES = [
 ];
 
 export default function SceneReview({ topic, onApprove, onRestart }) {
-  const [status, setStatus] = useState('planning'); // planning | steering | generating | ready
+  const [status, setStatus] = useState('planning');
   const [statusText, setStatusText] = useState('Planning your story...');
   const [plan, setPlan] = useState(null);
   const [artStyle, setArtStyle] = useState('');
   const [steering, setSteering] = useState('');
   const [scenes, setScenes] = useState([]);
+  const [characterDescriptions, setCharacterDescriptions] = useState('');
   const [currentScene, setCurrentScene] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
   const [editInput, setEditInput] = useState('');
   const [rewriting, setRewriting] = useState(false);
-  const preGeneratedAssets = useState({}); // scene_number -> asset data
-  const [assets, setAssets] = preGeneratedAssets;
-
   const [pendingAssets, setPendingAssets] = useState({});
   const [completedCount, setCompletedCount] = useState(0);
   const [totalScenes, setTotalScenes] = useState(0);
@@ -33,7 +31,7 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
 
   useEffect(() => { runPlanning(); }, []);
 
-  // ── Step 1: Plan only ──
+  // ── Step 1: Plan ──
   const runPlanning = async () => {
     try {
       if (MOCK) {
@@ -58,7 +56,7 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
     }
   };
 
-  // ── Step 2: Generate + critique after user confirms steering ──
+  // ── Step 2: Generate + critique ──
   const runGeneration = async () => {
     try {
       if (MOCK) {
@@ -79,6 +77,9 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
       setStatus('generating'); setStatusText('Writing your scenes...');
       const storyRes = await generateStory(topic, plan, steering || null);
       let sc = storyRes.data.scenes;
+      const chars = storyRes.data.character_descriptions || '';
+      setCharacterDescriptions(chars);
+      console.log('Character descriptions:', chars);
 
       setStatusText('Refining and critiquing...');
       for (let i = 0; i < sc.length; i++) {
@@ -98,20 +99,19 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
     }
   };
 
-  const generateWithRetry = async (sceneNumber, sceneText, artStyle) => {
-    for (let attempt = 1; attempt <= 2; attempt++) {
+  // 1 retry only
+  const generateWithRetry = async (sceneNumber, sceneText, artStyle, charDescriptions) => {
+    for (let attempt = 1; attempt <= 1; attempt++) {
       try {
-        const res = await generateSingleSceneAssets(sceneNumber, sceneText, artStyle);
+        const res = await generateSingleSceneAssets(sceneNumber, sceneText, artStyle, charDescriptions);
         if (res.data.image_b64 && res.data.audio_b64) return res.data;
-        console.log(`Scene ${sceneNumber} image missing, retrying (${attempt}/2)...`);
-        await new Promise(r => setTimeout(r, 65000));
+        console.log(`Scene ${sceneNumber} image missing, no more retries.`);
+        return res.data; // return what we have even if image is missing
       } catch (err) {
         console.log(`Scene ${sceneNumber} attempt ${attempt} failed:`, err.message);
-        if (attempt < 2) await new Promise(r => setTimeout(r, 65000));
-        else throw err;
+        throw err;
       }
     }
-    throw new Error(`Scene ${sceneNumber} failed after 2 retries`);
   };
 
   const handleApprove = () => {
@@ -123,14 +123,14 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
     const isLast = currentScene === scenes.length - 1;
 
     if (!MOCK) {
-      generateWithRetry(sceneNumber, sceneText, artStyle)
+      generateWithRetry(sceneNumber, sceneText, artStyle, characterDescriptions)
         .then(data => {
           setPendingAssets(prev => {
             const updated = { ...prev, [data.scene_number]: data };
             setCompletedCount(c => {
               const newCount = c + 1;
               if (newCount === scenes.length) {
-                onApprove({ ...plan, art_style: artStyle }, scenes, updated);
+                onApprove({ ...plan, art_style: artStyle }, scenes, updated, characterDescriptions);
               }
               return newCount;
             });
@@ -138,7 +138,7 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
           });
         })
         .catch(err => {
-          console.error('Scene generation failed after retries:', err);
+          console.error('Scene generation failed:', err);
           setStatus('error');
           setStatusText('Generation failed. Please try again in a few minutes.');
         });
@@ -148,7 +148,7 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
       setCurrentScene(i => i + 1);
     } else {
       if (MOCK) {
-        onApprove({ ...plan, art_style: artStyle }, scenes, {});
+        onApprove({ ...plan, art_style: artStyle }, scenes, {}, '');
       } else {
         setTotalScenes(scenes.length);
         setStatus('finalizing');
@@ -214,7 +214,6 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
 
   return (
     <div className="review">
-
       {/* Header */}
       <div className="review-header">
         <div className="review-eyebrow">Your Story</div>
@@ -238,13 +237,9 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
         </div>
       )}
 
-
-
-      {/* ── Steering screen ── */}
+      {/* Steering screen */}
       {status === 'steering' && plan && (
         <div className="steering-wrap">
-
-          {/* Art style selector */}
           <div className="steering-section">
             <div className="steering-label">Art Style</div>
             <div className="steering-styles">
@@ -260,7 +255,6 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
             </div>
           </div>
 
-          {/* Steering input */}
           <div className="steering-section">
             <div className="steering-label">Any direction before we write? <span className="steering-optional">(optional)</span></div>
             <input
@@ -273,7 +267,6 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
             />
           </div>
 
-          {/* Generate button */}
           <button className="steering-generate-btn" onClick={runGeneration}>
             ✦ &nbsp; Write My Story
           </button>
@@ -282,18 +275,15 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
         </div>
       )}
 
-      {/* ── Scene review ── */}
+      {/* Scene review */}
       {status === 'ready' && scenes.length > 0 && (
         <div className="review-scene-wrap">
-
-          {/* Progress dots */}
           <div className="review-dots">
             {scenes.map((_, i) => (
               <div key={i} className={`review-dot ${i === currentScene ? 'active' : ''} ${i < currentScene ? 'done' : ''}`} />
             ))}
           </div>
 
-          {/* Scene card */}
           <div className="review-card">
             <div className="review-card-number">Scene {currentScene + 1} of {scenes.length}</div>
             <div className="review-card-text">{scenes[currentScene]}</div>
@@ -321,7 +311,6 @@ export default function SceneReview({ topic, onApprove, onRestart }) {
             )}
           </div>
 
-          {/* Action buttons */}
           <div className="review-actions">
             <button className="review-btn-edit" onClick={editOpen ? () => setEditOpen(false) : handleEdit}>
               {editOpen ? '✕ Cancel' : '✏ Edit'}

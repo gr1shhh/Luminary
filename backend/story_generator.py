@@ -5,10 +5,6 @@ from config import PROJECT_ID, LOCATION, STORY_MODEL_NAME, MIN_SCENES, MAX_SCENE
 
 
 def init_story_model():
-    """
-    Uses Google Gen AI SDK with Vertex AI backend.
-    No API key needed — uses existing gcloud ADC credentials.
-    """
     client = genai.Client(
         vertexai=True,
         project=PROJECT_ID,
@@ -18,10 +14,6 @@ def init_story_model():
 
 
 def _parse_json(text):
-    """
-    Robustly extracts and parses JSON from a Gemini response.
-    Handles markdown code fences, trailing comments, and extra whitespace.
-    """
     text = re.sub(r"```(?:json)?\s*", "", text).strip()
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if not match:
@@ -30,7 +22,6 @@ def _parse_json(text):
 
 
 def _generate(client, prompt):
-    """Single helper to call Gemini via Gen AI SDK."""
     response = client.models.generate_content(
         model=STORY_MODEL_NAME,
         contents=prompt
@@ -39,10 +30,6 @@ def _generate(client, prompt):
 
 
 def plan_story(client, topic):
-    """
-    Behavior 3: Agent decides scene count + structure based on topic complexity.
-    Returns a plan dict: { scene_count, tone, art_style, scene_summaries }
-    """
     prompt = f"""
     You are a creative director planning a cinematic story.
     The user wants a story about: "{topic}"
@@ -76,10 +63,6 @@ def plan_story(client, topic):
 
 
 def generate_story(client, topic, plan, steering=None):
-    """
-    Behavior 2: Generates the full story using the plan.
-    Accepts optional steering instructions from the user.
-    """
     summaries_text = "\n".join(
         f"Scene {i+1}: {s}" for i, s in enumerate(plan["scene_summaries"])
     )
@@ -114,10 +97,39 @@ def generate_story(client, topic, plan, steering=None):
     return _generate(client, prompt)
 
 
+def extract_characters(client, scenes):
+    """
+    Extract character descriptions from the full story once.
+    Returns a string to prepend verbatim to every image prompt.
+    If no named characters, returns empty string.
+    """
+    full_story = "\n\n".join(scenes)
+    prompt = f"""
+    You are a cinematographer preparing a visual style guide.
+    Read this story and list every named character with their exact physical appearance.
+
+    For each character include: approximate age, gender, build, hair color and style,
+    skin tone, clothing/uniform, and any notable features.
+    Be specific and concrete — these descriptions will be used to keep characters
+    visually consistent across multiple AI-generated images.
+
+    If there are no named characters, respond with exactly: NONE
+
+    Story:
+    {full_story}
+
+    Respond with ONLY a comma-separated list of character descriptions like:
+    "Sarah: woman in her 30s, slim build, short auburn hair, pale skin, wearing a white lab coat and glasses. John: man in his 50s, stocky build, grey crew cut, dark skin, wearing a NASA blue flight suit."
+
+    If no named characters: NONE
+    """
+    result = _generate(client, prompt).strip()
+    if result.upper() == "NONE" or not result:
+        return ""
+    return result
+
+
 def regenerate_single_scene(client, scene_number, original_text, instruction, tone):
-    """
-    Behavior 1: Regenerates a single scene based on user feedback.
-    """
     prompt = f"""
     Rewrite Scene {scene_number} of a cinematic story with tone "{tone}".
 
@@ -138,10 +150,6 @@ def regenerate_single_scene(client, scene_number, original_text, instruction, to
 
 
 def critique_scene(client, scene_number, scene_text, tone):
-    """
-    Behavior 4: Self-critique. Scores the scene and rewrites if below threshold.
-    Returns { score, rewritten } where rewritten is None if score is acceptable.
-    """
     prompt = f"""
     You are a harsh but fair cinematic story editor.
     Rate this scene from a story with tone "{tone}".

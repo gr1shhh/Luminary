@@ -14,11 +14,11 @@ export const critiqueScene = (scene_number, scene_text, tone) =>
 export const regenerateScene = (scene_number, original_text, instruction, tone) =>
   axios.post(`${BASE_URL}/regenerate`, { scene_number, original_text, instruction, tone });
 
-export const streamAssets = async (scenes, art_style, onProgress, onScene, onDone) => {
+export const streamAssets = async (scenes, art_style, character_descriptions = '', onProgress, onScene, onDone) => {
   const response = await fetch(`${BASE_URL}/generate-assets/stream`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ scenes, art_style }),
+    body: JSON.stringify({ scenes, art_style, character_descriptions }),
   });
 
   const reader = response.body.getReader();
@@ -58,11 +58,11 @@ export const streamAssets = async (scenes, art_style, onProgress, onScene, onDon
   }
 };
 
-export const regenerateImage = (scene_number, scene_text, art_style) =>
-  axios.post(`${BASE_URL}/regenerate-image`, { scene_number, scene_text, art_style });
+export const regenerateImage = (scene_number, scene_text, art_style, character_descriptions = '') =>
+  axios.post(`${BASE_URL}/regenerate-image`, { scene_number, scene_text, art_style, character_descriptions });
 
-export const regenerateSceneAssets = (scene_number, scene_text, art_style, tone, instruction) =>
-  axios.post(`${BASE_URL}/regenerate-scene-assets`, { scene_number, scene_text, art_style, tone, instruction });
+export const regenerateSceneAssets = (scene_number, scene_text, art_style, tone, instruction, character_descriptions = '') =>
+  axios.post(`${BASE_URL}/regenerate-scene-assets`, { scene_number, scene_text, art_style, tone, instruction, character_descriptions });
 
-export const generateSingleSceneAssets = (scene_number, scene_text, art_style) =>
-  axios.post(`${BASE_URL}/generate-single-scene-assets`, { scene_number, scene_text, art_style });
+export const generateSingleSceneAssets = (scene_number, scene_text, art_style, character_descriptions = '') =>
+  axios.post(`${BASE_URL}/generate-single-scene-assets`, { scene_number, scene_text, art_style, character_descriptions });

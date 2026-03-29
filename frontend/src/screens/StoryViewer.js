@@ -232,7 +232,7 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 						{loadingImage ? "..." : "↺"}
 					</button>
 
-					{(scene.audio_b64 || scene.mock_audio_url) && <audio ref={audioRef} src={scene.mock_audio_url || `data:audio/mp3;base64,${scene.audio_b64}`} />}
+					{(scene.audio_b64 || scene.mock_audio_url) && <audio ref={audioRef} src={scene.mock_audio_url || `data:audio/mp3;base64,${scene.audio_b64}`} onEnded={() => { if (!isLast) setCurrent((i) => i + 1); }} /> }
 				</div>
 			</div>
 

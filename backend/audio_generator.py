@@ -44,6 +44,7 @@ def generate_scene_audio_with_timings(tts_client, scene_text):
         sample_rate_hertz=16000,
         language_code="en-US",
         enable_word_time_offsets=True,
+        enable_automatic_punctuation=True,
     )
     stt_response = stt_client.recognize(config=stt_config, audio=stt_audio)
 

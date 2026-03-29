@@ -2,19 +2,24 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { streamAssets, regenerateImage, regenerateSceneAssets } from "../api";
 import "./StoryViewer.css";
 
-// Group word_timings into fixed chunks of ~6 words
-function buildPhrases(word_timings) {
-  if (!word_timings || word_timings.length === 0) return [];
-  const CHUNK_SIZE = 6;
-  const phrases = [];
-  for (let i = 0; i < word_timings.length; i += CHUNK_SIZE) {
-    const chunk = word_timings.slice(i, i + CHUNK_SIZE);
-    phrases.push({
-      text: chunk.map((x) => x.word).join(" "),
-      start: chunk[0].time,
-    });
-  }
-  return phrases;
+function buildPhrases(scene_text, word_timings) {
+	if (!word_timings || word_timings.length === 0) return [];
+
+	// Split original scene text into words (preserves punctuation/caps)
+	const originalWords = scene_text.trim().split(/\s+/);
+	const CHUNK_SIZE = 6;
+	const phrases = [];
+
+	for (let i = 0; i < word_timings.length; i += CHUNK_SIZE) {
+		const chunk = word_timings.slice(i, i + CHUNK_SIZE);
+		// Use original words for display, STT timing for sync
+		const displayWords = originalWords.slice(i, i + CHUNK_SIZE).join(" ");
+		phrases.push({
+			text: displayWords,
+			start: chunk[0].time,
+		});
+	}
+	return phrases;
 }
 
 export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = {}, onRestart }) {
@@ -29,13 +34,16 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 	const MOCK = process.env.REACT_APP_MOCK === "true";
 	const BASE = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
-	useEffect(() => { generateAssets(); }, []);
+	useEffect(() => {
+		generateAssets();
+	}, []);
 
 	// Build phrases for current scene
+
 	const phrases = useMemo(() => {
 		const scene = generatedScenes[current];
 		if (!scene) return [];
-		return buildPhrases(scene.word_timings);
+		return buildPhrases(scene.scene_text, scene.word_timings);
 	}, [current, generatedScenes]);
 
 	// Autoplay + reset phrase when scene changes
@@ -102,15 +110,20 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 		}));
 
 		const preGenMap = {};
-		Object.values(preGeneratedAssets).forEach((a) => { preGenMap[a.scene_number] = a; });
-		const merged = initial.map((s) => preGenMap[s.scene_number] ? { ...s, ...preGenMap[s.scene_number] } : s);
+		Object.values(preGeneratedAssets).forEach((a) => {
+			preGenMap[a.scene_number] = a;
+		});
+		const merged = initial.map((s) => (preGenMap[s.scene_number] ? { ...s, ...preGenMap[s.scene_number] } : s));
 		setGeneratedScenes(merged);
 
 		const scene1 = merged.find((s) => s.scene_number === 1);
 		if (scene1 && scene1.image_b64 && scene1.audio_b64) setStatus("ready");
 
 		const missingScenes = merged.filter((s) => !s.image_b64);
-		if (missingScenes.length === 0) { setStatus("ready"); return; }
+		if (missingScenes.length === 0) {
+			setStatus("ready");
+			return;
+		}
 
 		try {
 			await streamAssets(
@@ -124,7 +137,7 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 						const updated = prev.map((s) =>
 							s.scene_number === originalNumber
 								? { ...s, image_b64: streamedScene.image_b64, audio_b64: streamedScene.audio_b64, word_timings: streamedScene.word_timings || [] }
-								: s
+								: s,
 						);
 						if (originalNumber === 1) setStatus("ready");
 						return updated;
@@ -137,8 +150,14 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 		}
 	};
 
-	const handlePrev = () => { audioRef.current?.pause(); setCurrent((i) => i - 1); };
-	const handleNext = () => { audioRef.current?.pause(); setCurrent((i) => i + 1); };
+	const handlePrev = () => {
+		audioRef.current?.pause();
+		setCurrent((i) => i - 1);
+	};
+	const handleNext = () => {
+		audioRef.current?.pause();
+		setCurrent((i) => i + 1);
+	};
 
 	const handleRegenerateImage = async () => {
 		setLoadingImage(true);
@@ -150,7 +169,9 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 				updated[current] = { ...updated[current], image_b64: res.data.image_b64 };
 				setGeneratedScenes(updated);
 			}
-		} catch (err) { console.error(err); }
+		} catch (err) {
+			console.error(err);
+		}
 		setLoadingImage(false);
 	};
 
@@ -161,9 +182,7 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 				<div className="viewer-loading-eyebrow">Creating your story</div>
 				<div className="viewer-loading-topic">"{topic}"</div>
 				<div className="viewer-loading-spinner" />
-				<div className="viewer-loading-label">
-					{progress.current > 0 ? `Generating scene ${progress.current} of ${progress.total}...` : "Starting..."}
-				</div>
+				<div className="viewer-loading-label">{progress.current > 0 ? `Generating scene ${progress.current} of ${progress.total}...` : "Starting..."}</div>
 				{progress.total > 0 && (
 					<div className="viewer-loading-bar">
 						<div className="viewer-loading-fill" style={{ width: `${(progress.current / progress.total) * 100}%` }} />
@@ -213,31 +232,28 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 						{loadingImage ? "..." : "↺"}
 					</button>
 
-					{(scene.audio_b64 || scene.mock_audio_url) && (
-						<audio
-							ref={audioRef}
-							src={scene.mock_audio_url || `data:audio/mp3;base64,${scene.audio_b64}`}
-						/>
-					)}
+					{(scene.audio_b64 || scene.mock_audio_url) && <audio ref={audioRef} src={scene.mock_audio_url || `data:audio/mp3;base64,${scene.audio_b64}`} />}
 				</div>
 			</div>
 
 			{/* Navigation */}
 			<div className="viewer-nav">
-				<button className="viewer-nav-btn" onClick={handlePrev} disabled={isFirst}>← Prev</button>
+				<button className="viewer-nav-btn" onClick={handlePrev} disabled={isFirst}>
+					← Prev
+				</button>
 				<div className="viewer-dots">
 					{generatedScenes.map((_, i) => (
-						<div
-							key={i}
-							className={`viewer-dot ${i === current ? "active" : ""}`}
-							onClick={() => setCurrent(i)}
-						/>
+						<div key={i} className={`viewer-dot ${i === current ? "active" : ""}`} onClick={() => setCurrent(i)} />
 					))}
 				</div>
 				{isLast ? (
-					<button className="viewer-nav-btn viewer-restart-btn" onClick={onRestart}>✦ New story</button>
+					<button className="viewer-nav-btn viewer-restart-btn" onClick={onRestart}>
+						✦ New story
+					</button>
 				) : (
-					<button className="viewer-nav-btn" onClick={handleNext}>Next →</button>
+					<button className="viewer-nav-btn" onClick={handleNext}>
+						Next →
+					</button>
 				)}
 			</div>
 		</div>

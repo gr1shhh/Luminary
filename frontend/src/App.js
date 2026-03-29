@@ -12,16 +12,18 @@ export default function App() {
   const [plan, setPlan] = useState(null);
   const [scenes, setScenes] = useState([]);
   const [preGeneratedAssets, setPreGeneratedAssets] = useState({});
+  const [characterDescriptions, setCharacterDescriptions] = useState('');
 
   const handleStart = (t) => {
     setTopic(t);
     setScreen('review');
   };
 
-  const handleApprove = (p, s, assets = {}) => {
+  const handleApprove = (p, s, assets = {}, chars = '') => {
     setPlan(p);
     setScenes(s);
     setPreGeneratedAssets(assets);
+    setCharacterDescriptions(chars);
     setScreen('viewer');
   };
 
@@ -30,33 +32,35 @@ export default function App() {
     setPlan(null);
     setScenes([]);
     setPreGeneratedAssets({});
+    setCharacterDescriptions('');
     setScreen('landing');
   };
 
   return (
     <>
-    <Analytics />
-    <div className="app">
-      {screen === 'landing' && (
-        <Landing onStart={handleStart} />
-      )}
-      {screen === 'review' && (
-        <SceneReview
-          topic={topic}
-          onApprove={handleApprove}
-          onRestart={handleRestart}
-        />
-      )}
-      {screen === 'viewer' && (
-        <StoryViewer
-          topic={topic}
-          plan={plan}
-          scenes={scenes}
-          preGeneratedAssets={preGeneratedAssets}
-          onRestart={handleRestart}
-        />
-      )}
-    </div>
+      <Analytics />
+      <div className="app">
+        {screen === 'landing' && (
+          <Landing onStart={handleStart} />
+        )}
+        {screen === 'review' && (
+          <SceneReview
+            topic={topic}
+            onApprove={handleApprove}
+            onRestart={handleRestart}
+          />
+        )}
+        {screen === 'viewer' && (
+          <StoryViewer
+            topic={topic}
+            plan={plan}
+            scenes={scenes}
+            preGeneratedAssets={preGeneratedAssets}
+            characterDescriptions={characterDescriptions}
+            onRestart={handleRestart}
+          />
+        )}
+      </div>
     </>
   );
 }

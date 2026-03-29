@@ -15,6 +15,7 @@ from story_generator import (
     generate_story,
     critique_scene,
     regenerate_single_scene,
+    extract_characters,
     _parse_json,
 )
 from scene_parser import extract_scenes, clean_scene_text
@@ -78,6 +79,27 @@ class RegenerateRequest(BaseModel):
 class GenerateAssetsRequest(BaseModel):
     scenes: list[str]
     art_style: str
+    character_descriptions: Optional[str] = ""
+
+class RegenerateImageRequest(BaseModel):
+    scene_number: int
+    scene_text: str
+    art_style: str
+    character_descriptions: Optional[str] = ""
+
+class RegenerateSceneAssetsRequest(BaseModel):
+    scene_number: int
+    scene_text: str
+    art_style: str
+    tone: str
+    instruction: str
+    character_descriptions: Optional[str] = ""
+
+class SingleSceneAssetsRequest(BaseModel):
+    scene_number: int
+    scene_text: str
+    art_style: str
+    character_descriptions: Optional[str] = ""
 
 
 @app.get("/health")
@@ -88,8 +110,8 @@ def health():
 @app.post("/plan")
 def plan(req: PlanRequest):
     try:
-        plan = plan_story(story_model, req.topic)
-        return plan
+        result = plan_story(story_model, req.topic)
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -100,7 +122,15 @@ def story(req: StoryRequest):
         story_text = generate_story(story_model, req.topic, req.plan, req.steering)
         scenes = extract_scenes(story_text, req.plan["scene_count"])
         scenes = [clean_scene_text(s) for s in scenes]
-        return {"scenes": scenes}
+
+        # Extract character descriptions once from the full story
+        character_descriptions = extract_characters(story_model, scenes)
+        print(f"  Characters extracted: {character_descriptions[:100] if character_descriptions else 'none'}")
+
+        return {
+            "scenes": scenes,
+            "character_descriptions": character_descriptions,
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -138,7 +168,8 @@ def generate_assets(req: GenerateAssetsRequest):
         image_file = os.path.join(output_dir, f"scene_{i}.png")
 
         image_saved = generate_scene_image(
-            image_model, scene_text, image_file, req.art_style
+            image_model, scene_text, image_file, req.art_style,
+            story_model, req.character_descriptions
         )
 
         audio_b64, word_timings = generate_scene_audio_with_timings(tts_client, scene_text)
@@ -171,7 +202,6 @@ async def generate_assets_stream(req: GenerateAssetsRequest):
             yield f"data: {json.dumps({'type': 'progress', 'scene': i, 'total': len(req.scenes), 'status': 'generating'})}\n\n"
 
             image_file = os.path.join(output_dir, f"scene_{i}.png")
-
             loop = asyncio.get_event_loop()
 
             # Audio first — fast, no rate limit
@@ -188,7 +218,9 @@ async def generate_assets_stream(req: GenerateAssetsRequest):
                     print(f"  Waiting {wait:.1f}s before Imagen call for scene {i}...")
                     await asyncio.sleep(wait)
                 image_saved = await loop.run_in_executor(
-                    None, generate_scene_image, image_model, scene_text, image_file, req.art_style
+                    None, generate_scene_image,
+                    image_model, scene_text, image_file, req.art_style,
+                    story_model, req.character_descriptions
                 )
                 last_imagen_time = time.time()
 
@@ -208,41 +240,21 @@ async def generate_assets_stream(req: GenerateAssetsRequest):
     )
 
 
-class RegenerateImageRequest(BaseModel):
-    scene_number: int
-    scene_text: str
-    art_style: str
-
-class RegenerateSceneAssetsRequest(BaseModel):
-    scene_number: int
-    scene_text: str
-    art_style: str
-    tone: str
-    instruction: str
-
-class SingleSceneAssetsRequest(BaseModel):
-    scene_number: int
-    scene_text: str
-    art_style: str
-
-
 @app.post("/regenerate-image")
-def regenerate_image(req: RegenerateImageRequest):
+def regenerate_image_endpoint(req: RegenerateImageRequest):
     try:
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
             image_file = os.path.join(tmpdir, f"scene_{req.scene_number}.png")
             image_saved = generate_scene_image(
-                image_model, req.scene_text, image_file, req.art_style
+                image_model, req.scene_text, image_file, req.art_style,
+                story_model, req.character_descriptions
             )
             image_b64 = None
             if image_saved and os.path.exists(image_file):
                 with open(image_file, "rb") as f:
                     image_b64 = base64.b64encode(f.read()).decode("utf-8")
-            return {
-                "scene_number": req.scene_number,
-                "image_b64": image_b64,
-            }
+            return {"scene_number": req.scene_number, "image_b64": image_b64}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -251,11 +263,7 @@ def regenerate_image(req: RegenerateImageRequest):
 def regenerate_scene_assets(req: RegenerateSceneAssetsRequest):
     try:
         new_text = regenerate_single_scene(
-            story_model,
-            req.scene_number,
-            req.scene_text,
-            req.instruction,
-            req.tone,
+            story_model, req.scene_number, req.scene_text, req.instruction, req.tone,
         )
         new_text = clean_scene_text(new_text)
 
@@ -264,7 +272,8 @@ def regenerate_scene_assets(req: RegenerateSceneAssetsRequest):
             image_file = os.path.join(tmpdir, f"scene_{req.scene_number}.png")
 
             image_saved = generate_scene_image(
-                image_model, new_text, image_file, req.art_style
+                image_model, new_text, image_file, req.art_style,
+                story_model, req.character_descriptions
             )
             audio_b64, word_timings = generate_scene_audio_with_timings(tts_client, new_text)
 
@@ -290,7 +299,6 @@ async def generate_single_scene_assets(req: SingleSceneAssetsRequest):
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
             image_file = os.path.join(tmpdir, f"scene_{req.scene_number}.png")
-
             loop = asyncio.get_event_loop()
 
             # Audio first — no rate limit
@@ -307,7 +315,9 @@ async def generate_single_scene_assets(req: SingleSceneAssetsRequest):
                     print(f"  Waiting {wait:.1f}s before Imagen call for scene {req.scene_number}...")
                     await asyncio.sleep(wait)
                 image_saved = await loop.run_in_executor(
-                    None, generate_scene_image, image_model, req.scene_text, image_file, req.art_style
+                    None, generate_scene_image,
+                    image_model, req.scene_text, image_file, req.art_style,
+                    story_model, req.character_descriptions
                 )
                 last_imagen_time = time.time()
 

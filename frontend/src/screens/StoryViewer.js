@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { streamAssets, regenerateImage } from "../api";
+import { streamAssets, regenerateImage, exportVideo } from "../api";
 import "./StoryViewer.css";
 
 function buildPhrases(scene_text, word_timings) {
@@ -21,8 +21,9 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 	const [progress, setProgress] = useState({ current: 0, total: 0 });
 	const [current, setCurrent] = useState(0);
 	const [loadingImage, setLoadingImage] = useState(false);
-	const [regenUsed, setRegenUsed] = useState(false); // 1 regen per story total
+	const [regenUsed, setRegenUsed] = useState(false);
 	const [confirmRegen, setConfirmRegen] = useState(false);
+	const [exportingVideo, setExportingVideo] = useState(false);
 	const audioRef = useRef(null);
 	const [phraseIndex, setPhraseIndex] = useState(-1);
 
@@ -168,17 +169,57 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 			const updated = [...generatedScenes];
 			updated[current] = { ...updated[current], image_b64: res.data.image_b64 };
 			setGeneratedScenes(updated);
-			setRegenUsed(true); // disable all regen buttons for this story
+			setRegenUsed(true);
 		} catch (err) {
 			console.error(err);
 		}
 		setLoadingImage(false);
-		// Restart audio and subtitles from beginning
 		setPhraseIndex(-1);
 		if (audioRef.current) {
 			audioRef.current.currentTime = 0;
 			audioRef.current.play().catch(() => {});
 		}
+	};
+
+	const handleExportVideo = async () => {
+		if (exportingVideo || MOCK) return;
+		setExportingVideo(true);
+		audioRef.current?.pause();
+		try {
+			// // Only pass scenes with both image and audio
+			// const scenesForExport = generatedScenes
+			// 	.filter((s) => s.image_b64 && s.audio_b64)
+			// 	.map((s) => ({
+			// 		scene_number: s.scene_number,
+			// 		image_b64: s.image_b64,
+			// 		audio_b64: s.audio_b64,
+			// 	}));
+
+			const scenesForExport = generatedScenes
+				.filter((s) => s.image_b64 && s.audio_b64)
+				.map((s) => ({
+					scene_number: s.scene_number,
+					image_b64: s.image_b64,
+					audio_b64: s.audio_b64,
+					word_timings: s.word_timings || [],
+					scene_text: s.scene_text || "",
+				}));
+
+			const res = await exportVideo(scenesForExport, topic);
+			const videoB64 = res.data.video_b64;
+
+			// Trigger download
+			const blob = new Blob([Uint8Array.from(atob(videoB64), (c) => c.charCodeAt(0))], { type: "video/mp4" });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `luminary-${topic.slice(0, 30).replace(/\s+/g, "-").toLowerCase()}.mp4`;
+			a.click();
+			URL.revokeObjectURL(url);
+		} catch (err) {
+			console.error("Export failed:", err);
+		}
+		setExportingVideo(false);
 	};
 
 	// ── Loading screen ──
@@ -235,23 +276,19 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 					)}
 
 					{/* Regen button + inline confirm */}
-					{!MOCK &&
+					{!MOCK && (
 						<div className="viewer-regen-wrap">
 							<button
 								className={`viewer-regen-image-btn ${regenUsed ? "used" : ""}`}
 								onClick={handleRegenClick}
 								disabled={loadingImage || regenUsed}
-								title={regenUsed ? "Already regenerated" : "New image"}
+								title={regenUsed ? "Already regenerated" : "Regenerate this image"}
 							>
 								{loadingImage ? "..." : "↺"}
 							</button>
-
-							{/* Inline confirm — appears to the left of the button */}
 							{confirmRegen && (
 								<div className="viewer-regen-confirm">
-									<div className="viewer-regen-confirm-text">
-										Regenerate? <span>1 use per story.</span>
-									</div>
+									<div className="viewer-regen-confirm-text">Regenerate?</div>
 									<div className="viewer-regen-confirm-actions">
 										<button className="viewer-regen-confirm-cancel" onClick={() => setConfirmRegen(false)}>
 											Cancel
@@ -263,7 +300,7 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 								</div>
 							)}
 						</div>
-					}
+					)}
 
 					{/* Loading overlay */}
 					{loadingImage && (
@@ -297,9 +334,16 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 					))}
 				</div>
 				{isLast ? (
-					<button className="viewer-nav-btn viewer-restart-btn" onClick={onRestart}>
-						✦ New story
-					</button>
+					<div className="viewer-nav-last">
+						{!MOCK && (
+							<button className="viewer-download-btn" onClick={handleExportVideo} disabled={exportingVideo}>
+								{exportingVideo ? "Exporting..." : "⬇ Download"}
+							</button>
+						)}
+						<button className="viewer-nav-btn viewer-restart-btn" onClick={onRestart}>
+							✦ New story
+						</button>
+					</div>
 				) : (
 					<button className="viewer-nav-btn" onClick={handleNext}>
 						Next →

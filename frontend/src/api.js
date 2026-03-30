@@ -66,3 +66,6 @@ export const regenerateSceneAssets = (scene_number, scene_text, art_style, tone,
 
 export const generateSingleSceneAssets = (scene_number, scene_text, art_style, character_descriptions = '') =>
   axios.post(`${BASE_URL}/generate-single-scene-assets`, { scene_number, scene_text, art_style, character_descriptions });
+
+export const exportVideo = (scenes, topic) =>
+  axios.post(`${BASE_URL}/export-video`, { scenes, topic }, { timeout: 300000 });

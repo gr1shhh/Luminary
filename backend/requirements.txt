@@ -7,3 +7,4 @@ google-cloud-texttospeech==2.34.0
 google-cloud-speech==2.38.0
 google-auth==2.49.1
 Pillow==10.4.0
+imageio_ffmpeg==0.6.0

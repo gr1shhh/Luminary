@@ -241,7 +241,7 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 								className={`viewer-regen-image-btn ${regenUsed ? "used" : ""}`}
 								onClick={handleRegenClick}
 								disabled={loadingImage || regenUsed}
-								title={regenUsed ? "Already regenerated" : "New image"}
+								title={regenUsed ? "Already regenerated" : "Regenerate this image"}
 							>
 								{loadingImage ? "..." : "↺"}
 							</button>
@@ -250,7 +250,7 @@ export default function StoryViewer({ topic, plan, scenes, preGeneratedAssets = 
 							{confirmRegen && (
 								<div className="viewer-regen-confirm">
 									<div className="viewer-regen-confirm-text">
-										Regenerate? <span>1 use per story.</span>
+										Regenerate image?
 									</div>
 									<div className="viewer-regen-confirm-actions">
 										<button className="viewer-regen-confirm-cancel" onClick={() => setConfirmRegen(false)}>
